@@ -38,6 +38,7 @@ mod.nextAction = function(creep){
 
  
     let target = Game.creeps[Creep.prototype.findGroupMemberByType("powerMiner", creep.data.flagName)];
+    if(creep.pos.getRangeTo(target) > 3) target = flag;
     if(!target) target = flag;
 
 
