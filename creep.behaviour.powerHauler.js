@@ -46,7 +46,7 @@ mod.nextAction = function(creep){
     // at target room
  else if( creep.data.destiny.room == creep.pos.roomName ){
         // TODO: This should perhaps check which distance is greater and make this decision based on that plus its load size
-        if( creep.sum / creep.carryCapacity > 0.1) {
+        if( creep.sum / creep.carryCapacity > 0.01) {
             this.goHome(creep);
             return;
         }
@@ -58,7 +58,7 @@ mod.nextAction = function(creep){
         if ( creep.sum === 0 ) {
             let target = FlagDir.find(FLAG_COLOR.invade.powerMining, creep.pos, true);
             if (creep.room && target && creep.pos.getRangeTo(target) > 3) {
-                creep.moveTo(target);
+                creep.data.travelRange = 3;
                 return Creep.action.travelling.assign(creep, target);
             }
         }
@@ -87,7 +87,8 @@ mod.assign = function(creep, action, target){
     return (action.isValidAction(creep) && action.isAddableAction(creep) && action.assign(creep, target));
 };
 mod.gotoTargetRoom = function(creep){
-    return Creep.action.travelling.assign(creep, Game.flags[creep.data.destiny.targetName]);
+    const targetFlag = creep.data.destiny ? Game.flags[creep.data.destiny.targetName] : null;
+    if (targetFlag) return Creep.action.travelling.assignRoom(creep, targetFlag.pos.roomName);
 };
 mod.goHome = function(creep){
     return Creep.action.travelling.assign(creep, Game.rooms[creep.data.homeRoom].storage);
