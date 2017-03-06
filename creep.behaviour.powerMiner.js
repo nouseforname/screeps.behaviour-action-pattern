@@ -54,7 +54,7 @@ mod.nextAction = function(creep) {
             return Creep.action.idle.assign(creep);
         }
     } else if( creep.pos.roomName === target.pos.roomName ) {
-            if( attackTarget && (creep.pos.getRangeTo(attackTarget) < 2 )){  
+            if( attackTarget && ( creep.pos.getRangeTo(attackTarget) < 2 || creep.hits < creep.hitsMax / 2 ) ) {
                 creep.attacking = creep.attack(attackTarget) == OK;
                 Creep.action.idle.assign(creep);
                 return;
