@@ -36,12 +36,10 @@ mod.nextAction = function(creep){
 
     Population.registerCreepFlag(creep, flag);
     let miner = Game.creeps[Creep.prototype.findGroupMemberByType("powerMiner", flag.name)];
-    if(!miner || creep.pos.getRangeTo(miner) > 3) {
-        if (creep.pos.getRangeTo(flag) > 2) {
-            creep.data.travelRange = 2;
-            return Creep.action.travelling.assign(creep, flag);
-        }
-    } else if (creep.pos.getRangeTo(miner > 1)) {
+    if(!miner || creep.pos.getRangeTo(flag) > 2) { // get to the flag
+        creep.data.travelRange = 2;
+        return Creep.action.travelling.assign(creep, flag);
+    } else if (creep.pos.getRangeTo(miner) > 1) { // near the flag, now find the miner
         creep.data.ignoreCreeps = false;
         return Creep.action.travelling.assign(creep, miner);
     }
