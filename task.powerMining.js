@@ -139,7 +139,7 @@ mod.checkForRequiredCreeps = (flag) => {
     // Prevents accidentally processing same room multiple times if flags > 1
     let memory = Task.powerMining.memory(roomName);
 
-    let trainCount = 1;
+    let trainCount = memory.trainCount || 1;
    
     // do we need to validate our spawning entries?
     for (const type of ['powerHauler', 'powerMiner', 'powerHealer']) {
@@ -230,41 +230,49 @@ mod.checkForRequiredCreeps = (flag) => {
     // (flag && flag.room.powerBank && flag.room.powerBank.hits < 100000)
     if (!flag.room || !flag.room.powerBank) return;
     if(flag.room){
-    	 let maxHaulers = Math.round(flag.room.powerBank.power / 1250);
+    	let maxHaulers = Math.ceil(flag.room.powerBank.power / 1250);
+        let neededCarryParts = Math.ceil(flag.room.powerBank.power / 50) - (haulerCount * 25);
         if((POWER_MINE_LOG && Game.time % 20 == 0) || room.name == 'sim'){
-            console.log('Power Mining - Target: '+flag+' | '+flag.pos.roomName+' | Power: '+flag.room.powerBank.power+ ' | Hits Left: '+flag.room.powerBank.hits+' Haulers: '+haulerCount+'/'+maxHaulers+' Time left: '+flag.room.powerBank.ticksToDecay)
+            logSystem('Power Mining', '- Target: '+flag+' | '+flag.pos.roomName+' | Power: '+flag.room.powerBank.power+ ' | Hits Left: '+flag.room.powerBank.hits+' Haulers: '+haulerCount+'/'+maxHaulers+' Time left: '+flag.room.powerBank.ticksToDecay)
         }
-    if(haulerCount < maxHaulers && (flag && flag.room.powerBank && flag.room.powerBank.hits < 400000)) {
-        for(let i = haulerCount; i < maxHaulers; i++) {
-            const spawnRoom = mod.strategies.hauler.spawnRoom(roomName);
-            if( !spawnRoom ) break;
+        if(haulerCount < maxHaulers && (flag && flag.room.powerBank && flag.room.powerBank.hits < 400000)) {
+            for(let i = haulerCount; i < maxHaulers; i++) {
+                const spawnRoom = mod.strategies.hauler.spawnRoom(roomName);
+                if( !spawnRoom ) break;
 
-            const storageRoom = mod.strategies.hauler.spawnRoom(roomName) || spawnRoom;
+                const storageRoom = mod.strategies.hauler.spawnRoom(roomName) || spawnRoom;
 
-            // spawning a new hauler
-            const creepDefinition = _.create(Task.powerMining.creep.hauler);
+                // spawning a new hauler
+                const creepDefinition = _.create(Task.powerMining.creep.hauler);
+                if (neededCarryParts > 25){
+                    creepDefinition.minMulti = 24;
+                    neededCarryParts -= 25;
+                    if (neededCarryParts <= 0) logError('too few carry parts', haulerCount, neededCarryParts);
+                } else creepDefinition.maxMulti = neededCarryParts - 1;
+
                 Task.spawn(
-                creepDefinition,
-                { // destiny
-                    task: mod.name, // taskName
-                    targetName: flag.name, // targetName
-                    type: Task.powerMining.creep.hauler.behaviour, // custom
-                    homeRoom: storageRoom.name
-                }, {
-                    targetRoom: roomName,
-                    explicit: spawnRoom.name,
-                },
-                creepSetup => { // onQueued callback
-                    let memory = Task.powerMining.memory(creepSetup.destiny.room);
-                    memory.queued[creepSetup.behaviour].push({
-                        room: creepSetup.queueRoom,
-                        name: creepSetup.name,
-                        body: _.countBy(creepSetup.parts)
-                    });
-                }
-            );
+                    creepDefinition,
+                    { // destiny
+                        task: mod.name, // taskName
+                        targetName: flag.name, // targetName
+                        type: Task.powerMining.creep.hauler.behaviour, // custom
+                        homeRoom: storageRoom.name
+                    }, {
+                        targetRoom: roomName,
+                        explicit: spawnRoom.name,
+                    },
+                    creepSetup => { // onQueued callback
+                        let memory = Task.powerMining.memory(creepSetup.destiny.room);
+                        memory.queued[creepSetup.behaviour].push({
+                            room: creepSetup.queueRoom,
+                            name: creepSetup.name,
+                            body: _.countBy(creepSetup.parts)
+                        });
+                    }
+                );
+            }
         }
-    }}    
+    }    
 };
 mod.findSpawning = (roomName, type) => {
     let spawning = [];
@@ -318,6 +326,9 @@ mod.memory = key => {
     if( !memory.hasOwnProperty('nextSpawnCheck') ){
         memory.nextSpawnCheck = {};
     }
+    if( !memory.hasOwnProperty('trainCount') ){
+        memory.trainCount = 1;
+    }
     // temporary migration
     if( memory.queued.miner ){
         memory.queued.powerMiner = memory.queued.miner;
@@ -344,8 +355,8 @@ mod.creep = {
         queue: 'Medium' // power needs to be high ish priority as there is a time limit.
     },
     hauler: {
-        fixedBody: [CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE],
-        multiBody: [],
+        fixedBody: [CARRY, MOVE],
+        multiBody: [CARRY, MOVE],
         behaviour: 'powerHauler',
         queue: 'Medium'
     },

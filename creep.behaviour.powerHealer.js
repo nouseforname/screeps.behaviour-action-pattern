@@ -31,33 +31,26 @@ mod.run = function(creep) {
     }
 };
 mod.nextAction = function(creep){
-    if( creep.data.destiny ) flag = Game.flags[creep.data.destiny.targetName || creep.data.destiny.flagName || creep.data.flagName];
-    if ( !flag ) flag = FlagDir.find(FLAG_COLOR.invade.powerMining, creep.pos, false);
-    const homeRoom = creep.data.homeRoom;
+    const flag = mod.getFlag(creep);
+    if (!flag) return Creep.action.recycling.assign(creep);
 
     Population.registerCreepFlag(creep, flag);
-
- 
-    let target = Game.creeps[Creep.prototype.findGroupMemberByType("powerMiner", creep.data.flagName)];
-    if(creep.pos.getRangeTo(target) > 3) target = flag;
-    if(!target) target = flag;
-
-
-    if( !flag ){
-        Creep.action.recycling.assign(creep);
-    } else if( !target ){
-        if(creep.pos.roomName != creep.data.homeRoom) {
-            return Creep.action.idle.assign(creep); //Creep.action.travelling.assign(creep, creep.data.homeRoom);
-        } else {
-            return Creep.action.idle.assign(creep);
+    let miner = Game.creeps[Creep.prototype.findGroupMemberByType("powerMiner", flag.name)];
+    if(!miner || creep.pos.getRangeTo(miner) > 3) {
+        if (creep.pos.getRangeTo(flag) > 2) {
+            creep.data.travelRange = 2;
+            return Creep.action.travelling.assign(creep, flag);
         }
-    } else {
-        if(creep.pos.getRangeTo(target) > 1){
-            creep.data.ignoreCreeps = false;
-            return Creep.action.travelling.assign(creep, target);
-        }
-        return Creep.action.idle.assign(creep);
+    } else if (creep.pos.getRangeTo(miner > 1)) {
+        creep.data.ignoreCreeps = false;
+        return Creep.action.travelling.assign(creep, miner);
     }
+    return Creep.action.idle.assign(creep);
+};
+mod.getFlag = function(creep) {
+    let flag = creep.data.destiny && Game.flags[creep.data.destiny.targetName];
+    if (flag) return flag;
+    else return FlagDir.find(FLAG_COLOR.invade.powerMining, creep.pos, false);
 };
 mod.strategies = {
     defaultStrategy: {
