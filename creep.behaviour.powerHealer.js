@@ -39,7 +39,7 @@ mod.nextAction = function(creep){
     if(!miner || creep.pos.getRangeTo(flag) > 2) { // get to the flag
         creep.data.travelRange = 2;
         return Creep.action.travelling.assign(creep, flag);
-    } else if (creep.pos.getRangeTo(miner) > 1) { // near the flag, now find the miner
+    } else if (miner.pos.roomName === flag.pos.roomName && creep.pos.getRangeTo(miner) > 1) { // near the flag, now find the miner
         creep.data.ignoreCreeps = false;
         return Creep.action.travelling.assign(creep, miner);
     }
