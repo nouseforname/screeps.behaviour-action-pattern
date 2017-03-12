@@ -56,7 +56,9 @@ mod.extend = function(){
                     return;
                 }
             }
-            this.repairNearby();
+            if (this.data && !_.contains(['remoteMiner', 'miner', 'upgrader'], this.data.creepType)) {
+                this.repairNearby();
+            }
             if( DEBUG && TRACE ) trace('Creep', {creepName:this.name, pos:this.pos, Behaviour: behaviour && behaviour.name, Creep:'run'});
             if( behaviour ) behaviour.run(this);
             else if(!this.data){
@@ -298,9 +300,13 @@ mod.extend = function(){
         if( here && here.length > 0 ) {
             let path;
             if( !this.data.idlePath || this.data.idlePath.length < 2 || this.data.idlePath[0].x != this.pos.x || this.data.idlePath[0].y != this.pos.y || this.data.idlePath[0].roomName != this.pos.roomName ) {
-                let goals = _.map(this.room.structures.all, function(o) {
+                let goals = this.room.structures.all.map(function(o) {
                     return { pos: o.pos, range: 1 };
-                });
+                }).concat(this.room.sources.map(function (s) {
+                    return { pos: s.pos, range: 2 };
+                })).concat(this.pos.findInRange(FIND_EXIT, 2).map(function (e) {
+                    return { pos: e, range: 1 };
+                }));
 
                 let ret = PathFinder.search(
                     this.pos, goals, {
@@ -327,9 +333,16 @@ mod.extend = function(){
                 this.move(this.pos.getDirectionTo(new RoomPosition(path[0].x,path[0].y,path[0].roomName)));
         }
     };
-    Creep.prototype.repairNearby = function( ) {
+    Creep.prototype.repairNearby = function() {
+        // only repair in rooms that we own, have reserved, or belong to our allies, also SK rooms and highways.
+        if (!(this.room.my ||
+            this.room.reserved ||
+            this.room.ally ||
+            Room.isCenterNineRoom(this.room.name) ||
+            Room.isHighwayRoom(this.room.name))) return;
+
         // if it has energy and a work part, remoteMiners do repairs once the source is exhausted.
-        if(this.carry.energy > 0 && this.hasActiveBodyparts(WORK) && this.data && this.data.creepType !== 'remoteMiner') {
+        if(this.carry.energy > 0 && this.hasActiveBodyparts(WORK)) {
             let nearby = this.pos.findInRange(this.room.structures.repairable, DRIVE_BY_REPAIR_RANGE);
             if( nearby && nearby.length ){
                 if( DEBUG && TRACE ) trace('Creep', {creepName:this.name, Action:'repairing', Creep:'repairNearby'}, nearby[0].pos);
@@ -501,6 +514,7 @@ mod.partsComparator = function (a, b) {
 };
 // params: {minThreat, maxWeight, maxMulti}
 mod.compileBody = function (room, params, sort = true) {
+    if (params.sort !== undefined) sort = params.sort;
     let parts = [];
     let multi = Creep.multi(room, params);
     for (let iMulti = 0; iMulti < multi; iMulti++) {
