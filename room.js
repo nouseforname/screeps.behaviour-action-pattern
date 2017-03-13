@@ -1096,13 +1096,15 @@ mod.extend = function(){
             structure => structure.structureType == STRUCTURE_CONTAINER
         );
         let add = (cont) => {
+            // TODO consolidate managed container code
             let minerals = this.find(FIND_MINERALS);
             let source = cont.pos.findInRange(this.sources, 2);
             let mineral = cont.pos.findInRange(minerals, 2);
+            let isControllerContainer = !!(this.my && cont.pos.getRangeTo(this.controller) <= 4);
             this.memory.container.push({
                 id: cont.id,
                 source: (source.length > 0),
-                controller: ( cont.pos.getRangeTo(this.controller) < 4 ),
+                controller: isControllerContainer,
                 mineral: (mineral.length > 0),
             });
             let assignContainer = s => s.memory.container = cont.id;
@@ -1169,8 +1171,9 @@ mod.extend = function(){
 
         // for each link add to memory ( if not contained )
         let add = (link) => {
+            // TODO consolidate managed container code
             if( !this.memory.links.find( (l) => l.id == link.id ) ) {
-                let isControllerLink = ( link.pos.getRangeTo(this.controller) < 4 );
+                let isControllerLink = ( link.pos.getRangeTo(this.controller) <= 4 );
                 let isSource = false;
                 if( !isControllerLink ) {
                     let source = link.pos.findInRange(this.sources, 2);
@@ -1978,21 +1981,26 @@ mod.extend = function(){
         return ret;
     }
     Room.prototype.controlObserver = function() {
-        const OBSERVER = this.observer;
+        const OBSERVER = this.structures.observer;
         if (!OBSERVER) return;
         if (!this.memory.observer.rooms) this.initObserverRooms();
         const ROOMS = this.memory.observer.rooms;
-        let lastLookedIndex = this.memory.observer.lastLookedIndex || ROOMS.length; // if doesn't exist, default to array length as it's guaranteed to be > array.length - 1.
+        let lastLookedIndex = Number.isInteger(this.memory.observer.lastLookedIndex) ? this.memory.observer.lastLookedIndex : ROOMS.length;
         let nextRoom;
+        let i = 0;
         do { // look ma! my first ever do-while loop!
-            if (lastLookedIndex >= ROOMS.length - 1) {
+            if (lastLookedIndex >= ROOMS.length) {
                 nextRoom = ROOMS[0];
             }  else {
                 nextRoom = ROOMS[lastLookedIndex + 1];
             }
             lastLookedIndex = ROOMS.indexOf(nextRoom);
-            this.memory.observer.lastLookedIndex = lastLookedIndex;
-        } while (Memory.observerSchedule.includes(nextRoom));
+            if (++i >= ROOMS.length) { // safety check - prevents an infinite loop
+                break;
+            }
+        } while (Memory.observerSchedule.includes(nextRoom) || nextRoom in Game.rooms);
+        this.memory.observer.lastLookedIndex = lastLookedIndex;
+        Memory.observerSchedule.push(nextRoom);
         OBSERVER.observeRoom(nextRoom); // now we get to observe a room
     };
     Room.prototype.initObserverRooms = function() {
@@ -2071,6 +2079,7 @@ mod.flush = function(){
         room.newInvader = [];
         room.goneInvader = [];
     };
+    Memory.observerSchedule = [];
     _.forEach(Game.rooms, clean);
 };
 mod.analyze = function(){
@@ -2089,6 +2098,7 @@ mod.analyze = function(){
                 room.updateResourceOrders();
                 room.updateRoomOrders();
                 room.terminalBroker();
+                room.initObserverRooms(); // to re-evaluate rooms, in case parameters are changed
             }
             room.roadConstruction();
             room.linkDispatcher();
@@ -2180,15 +2190,15 @@ mod.calcCardinalDirection = function(roomName) {
 };
 mod.calcGlobalCoordinates = function(roomName, callBack) {
     if (!callBack) return null;
-	const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName);
-	const x = +parsed[1];
-	const y = +parsed[2];
-	return callBack(x, y);
+    const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName);
+    const x = +parsed[1];
+    const y = +parsed[2];
+    return callBack(x, y);
 };
 mod.calcCoordinates = function(roomName, callBack){
     if (!callBack) return null;
     return Room.calcGlobalCoordinates(roomName, (x, y) => {
-    	return callBack(x % 10, y % 10);
+        return callBack(x % 10, y % 10);
     });
 };
 mod.isCenterRoom = function(roomName){
