@@ -247,7 +247,6 @@ module.exports.loop = function () {
     if (Memory.cloaked === undefined) {
         Memory.cloaked = {};
     }
-    Memory.observerSchedule = [];
 
     // ensure up to date parameters
     _.assign(global, load("parameter"));
