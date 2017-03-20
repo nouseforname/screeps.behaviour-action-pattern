@@ -61,17 +61,17 @@ let mod = {
     ROOM_TRADING: true, // set this true to enable haulers within your colony to request resources from other rooms in your colony
     FILL_POWERSPAWN: true,
     MIN_MINERAL_SELL_AMOUNT: 20000,
-    ENERGY_VALUE_CREDITS: 0.15, // assumed energy exchange rate (in credits) to determine best mineral sell offer
+    ENERGY_VALUE_CREDITS: 0.05, // assumed energy exchange rate (in credits) to determine best mineral sell offer
     //MAX_SELL_RANGE: 60,
     TERMINAL_ENERGY: 100000,
     MIN_SELL_RATIO: {
-        'H': 0.02,
-        'O': 0.02,
-        'U': 0.02,
-        'L': 0.02,
-        'K': 0.02,
-        'Z': 0.02,
-        'X': 0.02
+        'H': 0.2,
+        'O': 0.2,
+        'U': 1,
+        'L': 1,
+        'K': 1,
+        'Z': 1,
+        'X': 1
     },
     MAX_REPAIR_LIMIT: { // Limits how high structures get repaired by towers, regarding RCL
         1: 1000,
