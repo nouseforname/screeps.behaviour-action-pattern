@@ -1,3 +1,5 @@
+// All methods require a JSDoc comment describing it.
+// http://usejsdoc.org/
 module.exports = {
     /**
      * formats an integer into a readable value
