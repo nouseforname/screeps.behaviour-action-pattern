@@ -45,5 +45,23 @@ module.exports = {
             return;
         }
         _.set(object, path, value);
-    }
+    },
+    
+    isObject(value) {
+        if (value === null) return false;
+        return typeof value === 'function' || typeof value === 'object';
+    },
+    
+    dye(style, text) {
+        if (Util.isObject(style)) {
+            let css = '';
+            const format = key => css += `${key}: ${style[key]};`;
+            _.forEach(Object.keys(style), format);
+            return `<span style="${css}">${text}</span>`;
+        }
+        if (style) {
+            return `<span style="color: ${style}">${text}</span>`;
+        }
+        return text;
+    },
 };
