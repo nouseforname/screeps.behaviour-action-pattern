@@ -109,11 +109,11 @@ module.exports = {
     /**
      * Log text as a system message showing a "referrer" as a label
      * @param {string} roomName - The name of the room being logged from
-     * @param {string} message - The message to log
+     * @param {...string} message - The message to log
      */
-    logSystem(roomName, message) {
+    logSystem(roomName, ...message) {
         const text = Util.dye(CRAYON.system, roomName);
-        console.log(Util.dye(CRAYON.system, `<a href="/a/#!/room/${roomName}">${text}</a> &gt; `) + message );
+        console.log(Util.dye(CRAYON.system, `<a href="/a/#!/room/${roomName}">${text}</a> &gt;`), ...message);
     },
     
     /**
@@ -219,13 +219,135 @@ module.exports = {
         if (fromRoom === toRoom) return 0;
         
         return Util.get(Memory, `routeRange.${fromRoom}.${toRoom}`, (function() {
-            let room = fromRoom instanceof Room ? fromRoom : Game.rooms[fromRoom];
+            const room = fromRoom instanceof Room ? fromRoom : Game.rooms[fromRoom];
             if (!room) return Room.roomDistance(fromRoom, toRoom, false);
             
-            let route = room.findroute(toRoom, false, false);
+            const route = room.findroute(toRoom, false, false);
             if (!route) return Room.roomDistance(fromRoom, toRoom, false);
             
             return route === ERR_NO_PATH ? Infinity : route.length;
         })());
+    },
+    
+    pave(roomName) {
+        const flags = _.values(Game.flags).filter(f => f.pos.roomName === roomName && f.color === FLAG_COLOR.pavementArt.color && f.secondaryColor === FLAG_COLOR.pavementArt.secondaryColor)
+        const val = Memory.pavementArt[roomName] === undefinede ? '' : Memory.pavementArt[roomName];
+        const posMap = flag => `x${flag.pos.x}y${flag.pos.y}`;
+        Memory.pavementArt[roomName] = val + flags.map(posMap).join('')+'x';
+        const setSite = flag => flag.pos.createConstructionSite(STRUCTURE_WALL);
+        flags.forEach(setSite);
+        const remote = f => f.remove();
+        flags.forEach(remove);
+    },
+    
+    unpave(roomName) {
+        if (!Memory.pavementArt || !Memory.pavementArt[roomName]) return false;
+        const room = Game.rooms[roomName];
+        if (!room) return false;
+        const unpaved = structure => Memory.pavementArt[roomName].indexOf(`x${structure.pos.x}y${structure.pos.y}x`) >= 0;
+        const structures = room.structures.all.filter(unpaved);
+        const destroy = structure => structure.destroy();
+        if (structures) structures.forEach(destroy);
+        delete Memory.pavementArt[roomName];
+        return true;
+    },
+    
+    guid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    },
+    
+    memoryUsage(key) {
+        const mem = key ? Memory[key] : Memory;
+        let string = '<table><tr><th>Key</th><th>Size (kb)</th></tr>';
+        let total = 0;
+        for (const key in mem) {
+            const sum = JSON.stringify(mem[key]).length / 1024;
+            total += sum;
+            string += `<tr><td>${key}</td><td>${_.round(sum, 2)}</td></tr>`;
+        }
+        string += `<tr><td>Total</td><td>${_.round(total, 2)}</td></tr></table>`;
+        return string;
+    },
+    
+    resetProfiler() {
+        Util.loadProfiler(true);
+    },
+    
+    loadProfiler(reset) {
+        if (reset) {
+            Util.logSystem('Profiler', 'resetting profiler data.');
+            Memory.profiler = {
+                totalCPU: 0,
+                totalTicks: 0,
+                types: {},
+                validTick: Game.time,
+            };
+        }
+        global.profiler = Memory.profiler;
+    },
+    
+    startProfiling(name, startCPU) {
+        let checkCPU;
+        let totalCPU;
+        if (PROFILE || DEBUG) {
+            if (_.isUndefined(Memory.profiler)) {
+                Util.resetProfiler();
+            } else if (!global.profiler ||
+                global.profiler.validTick !== Memory.profiler.validTick ||
+                global.profiler.totalTicks < Memory.profiler.totalTicks) {
+                Util.loadProfiler();
+            }
+            const onLoad = startCPU || Game.cpu.getUsed();
+            let start = onLoad;
+            if (PROFILE) {
+                checkCPU = function(localName, limit, type) {
+                    const current = Game.cpu.getUsed();
+                    const used = _.round(current - start, 2);
+                    if (!limit || used > limit) {
+                        Util.logSystem(name + ':' + localName, used);
+                    }
+                    if (type) {
+                        Util.set(global.profiler.types, type, {
+                            totalCPU: 0,
+                            count: 0,
+                            totalCount: 0,
+                        });
+                        global.profiler.types[type].totalCPU += used;
+                        glboal.profiler.types[type].count++;
+                    }
+                    start = current;
+                };
+            }
+            totalCPU = function() {
+                const totalUsed = Game.cpu.getUsed() - onLoad;
+                global.profiler.totalCPU += totalUsed;
+                global.profiler.totalTicks++;
+                const avgCPU = global.profiler.totalCPU / global.profiler.totalTicks;
+                if (PROFILE && PROFILING.AVERAGE_USAGE && _.size(global.profiler.types) > 0) {
+                    let heading = '';
+                    while (heading.length < 30) heading += ' ';
+                    Util.logSystem(heading, '(avg/creep/tick) (active) (weighted avg) (executions)');
+                    for (const type in global.profiler.types) {
+                        const data = global.profiler.types[type];
+                        data.totalCount += data.count;
+                        const typeAvg = _.round(data.totalCPU / data.totalCount, 3);
+                        let heading = type + ': ';
+                        while (heading < 30) heading += ' ';
+                        Util.logSystem(heading, '\t' + typeAvg + '\t\t' +
+                            data.count + '\t\t' + _.round(typeAvg * data.count, 3) + '\t\t' + data.totalCount);
+                        data.count = 0;
+                    }
+                }
+                Util.logSystem(name, ' loop:' + _.round(totalUsed, 2), 'other:' + _.round(onLoad, 2), 'avg:' + _.round(avgCPU, 2), 'ticks:' +
+                    global.profiler.totalTicks, 'bucket:' + Game.cpu.bucket, 2);
+                if (PROFILE) console.log('\n');
+                Memory.profiler = global.profiler;
+            };
+        }
+        return {checkCPU, totalCPU};
     }
 };
