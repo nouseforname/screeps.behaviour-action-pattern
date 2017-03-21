@@ -212,7 +212,6 @@ global.install = () => {
     //global.extend();
     Extensions.extend();
     Creep.extend();
-    Room.extend();
     Spawn.extend();
     FlagDir.extend();
     Task.populate();
