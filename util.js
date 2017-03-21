@@ -260,6 +260,11 @@ module.exports = {
         });
     },
     
+    /**
+     * List the current memory usage of a given path in memory in kb
+     * @param {string} key - The location in memory to check eg 'rooms.E1S1.statistics'
+     * @returns {string}
+     */
     memoryUsage(key) {
         const mem = key ? Memory[key] : Memory;
         let string = '<table><tr><th>Key</th><th>Size (kb)</th></tr>';
@@ -273,10 +278,17 @@ module.exports = {
         return string;
     },
     
+    /**
+     * Reset all profiling data
+     */
     resetProfiler() {
         Util.loadProfiler(true);
     },
     
+    /**
+     * Load existing profiling data or intialize to defaults.
+     * @param {boolean} reset - Optionally reset all profiling data
+     */
     loadProfiler(reset) {
         if (reset) {
             Util.logSystem('Profiler', 'resetting profiler data.');
@@ -290,6 +302,12 @@ module.exports = {
         global.profiler = Memory.profiler;
     },
     
+    /**
+     * Creates and returns a profiling object, use checkCPU to compare usage between calls
+     * @param {string} name - The name to use when reporting
+     * @param {Number} startCPU - Optional starting CPU usage to use as starting point
+     * @returns {checkCPU, totalCPU} - functions to be called to check usage and output totals
+     */
     startProfiling(name, startCPU) {
         let checkCPU;
         let totalCPU;
@@ -304,6 +322,12 @@ module.exports = {
             const onLoad = startCPU || Game.cpu.getUsed();
             let start = onLoad;
             if (PROFILE) {
+                /**
+                 * Compares usage since startProfiling or the last call to checkCPU and reports if over limit
+                 * @param {string} localName - The local name to use when reporting
+                 * @param {Number} limit - CPU threshold for reporting usage
+                 * @param {string} type - Optional, will store average usage for all calls that share this type
+                 */
                 checkCPU = function(localName, limit, type) {
                     const current = Game.cpu.getUsed();
                     const used = _.round(current - start, 2);
@@ -322,6 +346,9 @@ module.exports = {
                     start = current;
                 };
             }
+            /**
+             * Calculates total usage and outputs usage based on parameter settings
+             */
             totalCPU = function() {
                 const totalUsed = Game.cpu.getUsed() - onLoad;
                 global.profiler.totalCPU += totalUsed;
