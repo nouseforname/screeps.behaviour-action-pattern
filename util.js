@@ -204,6 +204,11 @@ module.exports = {
         console.log(Game.time, Util.dye(CRAYON.error, category), ...msg, Util.dye(CRAYON.birth, JSON.stringify(entityWhere)));
     },
     
+    /**
+     * Converts the date to local time
+     * @param {Date} date - Server date
+     * @returns {Date}
+     */
     toLocalData(date) {
         if (!date) date = new Date();
         let offset = TIME_ZONE;
@@ -211,32 +216,57 @@ module.exports = {
         return new Date(date.getTime() + (3600000 * offset));
     },
     
+    /**
+     * Formats the date object to a date-time string
+     * @param {Date} date - The date to format
+     * @returns {string}
+     */
     toDateTimeString(date) {
         const pad = Util.pad;
         return pad(date.getFullYear(), 0, 4) + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + Util.toTimeString(date);
     },
     
+    /**
+     * Formats the date object to a time string
+     * @param {Date} date - The date to format
+     * @returns {string}
+     */
     toTimeString(date) {
         const pad = Util.pad;
         return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
     },
     
+    /**
+     * Checks if it's summertime/daylight savings in the date provided
+     * @param {Date} date - A date object to check
+     * @returns {Boolean}
+     */
     isSummerTime(date) {
-        Date.prototype.stdTimezoneOffset = function() {
-            const jan = new Date(this.getFullYear(), 0, 1);
-            const jul = new Date(this.getFullYear(), 6, 1);
-            return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-        };
-        Object.defineProperty(Date.prototype, 'dst', {
-            get: function() {
-                return this.getTimezoneOffset() < this.stdTimezoneOffset();
-            },
-            configurable: true,
-        });
+        if (!Reflect.has(Date.prototype, 'stdTimezoneOffset')) {
+            Date.prototype.stdTimezoneOffset = function () {
+                const jan = new Date(this.getFullYear(), 0, 1);
+                const jul = new Date(this.getFullYear(), 6, 1);
+                return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+            };
+        }
+        if (!Reflect.has(Date.prototype, 'dst')) {
+            Object.defineProperty(Date.prototype, 'dst', {
+                get: function () {
+                    return this.getTimezoneOffset() < this.stdTimezoneOffset();
+                },
+                configurable: true,
+            });
+        }
         
         return date.dst;
     },
     
+    /**
+     * Adds a Game object to an array by providing the object ID
+     * @param {Array<*>} array - The array to add the object to
+     * @param {string} id - ID string corrosponding to a Game object
+     * @returns {Array<*>}
+     */
     addById(array, id) {
         if (!array) array = [];
         const obj = Game.getObjectById(id);
@@ -244,6 +274,9 @@ module.exports = {
         return array;
     },
     
+    /**
+     * Sends room statistics via. game email
+     */
     processReports() {
         if (!_.isUndefined(Memory.statistics) && !_.isUndefined(Memory.statistics.reports) && Memory.statistics.reports.length) {
             let mails;
@@ -257,6 +290,12 @@ module.exports = {
         }
     },
     
+    /**
+     * Gets the distances between two rooms
+     * @param {string} fromRoom - Starting room
+     * @param {string} toRoom - Ending room
+     * @returns {Number}
+     */
     routeRange(fromRoom, toRoom) {
         if (fromRoom === toRoom) return 0;
         
@@ -271,6 +310,10 @@ module.exports = {
         });
     },
     
+    /**
+     * Paves the room utilising Brown/Brown Pavement Art flags
+     * @param {string} roomName - The room to pave
+     */
     pave(roomName) {
         const flags = _.values(Game.flags).filter(f => f.pos.roomName === roomName && f.color === FLAG_COLOR.pavementArt.color && f.secondaryColor === FLAG_COLOR.pavementArt.secondaryColor)
         const val = Memory.pavementArt[roomName] === undefinede ? '' : Memory.pavementArt[roomName];
@@ -282,6 +325,11 @@ module.exports = {
         flags.forEach(remove);
     },
     
+    /**
+     * Unpaves the room
+     * @param {string} roomName - The room to unpave
+     * @returns {Boolean} Whether or not the method was sucessful
+     */
     unpave(roomName) {
         if (!Memory.pavementArt || !Memory.pavementArt[roomName]) return false;
         const room = Game.rooms[roomName];
@@ -294,6 +342,10 @@ module.exports = {
         return true;
     },
     
+    /**
+     * Generate a GUID. Note: This is not guaranteed to be 100% unique.
+     * @returns {string}
+     */
     guid() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
             const r = Math.random() * 16 | 0;
@@ -329,9 +381,9 @@ module.exports = {
     
     /**
      * Load existing profiling data or intialize to defaults.
-     * @param {boolean} reset - Optionally reset all profiling data
+     * @param {Boolean} [reset=false] - Optionally reset all profiling data
      */
-    loadProfiler(reset) {
+    loadProfiler(reset=false) {
         if (reset) {
             Util.logSystem('Profiler', 'resetting profiler data.');
             Memory.profiler = {
@@ -347,7 +399,7 @@ module.exports = {
     /**
      * Creates and returns a profiling object, use checkCPU to compare usage between calls
      * @param {string} name - The name to use when reporting
-     * @param {Number} startCPU - Optional starting CPU usage to use as starting point
+     * @param {Number} [startCPU] - Optional starting CPU usage to use as starting point
      * @returns {checkCPU, totalCPU} - functions to be called to check usage and output totals
      */
     startProfiling(name, startCPU) {
@@ -368,7 +420,7 @@ module.exports = {
                  * Compares usage since startProfiling or the last call to checkCPU and reports if over limit
                  * @param {string} localName - The local name to use when reporting
                  * @param {Number} limit - CPU threshold for reporting usage
-                 * @param {string} type - Optional, will store average usage for all calls that share this type
+                 * @param {string} [type] - Optional, will store average usage for all calls that share this type
                  */
                 checkCPU = function(localName, limit, type) {
                     const current = Game.cpu.getUsed();
