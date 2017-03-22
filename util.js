@@ -41,6 +41,7 @@ module.exports = {
     get(object, path, defaultValue, setDefault = true) {
         const r = _.get(object, path);
         if (!r && !_.isUndefined(defaultValue) && setDefault) {
+            defaultValue = typeof defaultValue === 'function' ? defaultValue() : defaultValue;
             _.set(object, path, defaultValue);
             return defaultValue;
         }
@@ -70,6 +71,31 @@ module.exports = {
     isObject(value) {
         if (value === null) return false;
         return typeof value === 'function' || typeof value === 'object';
+    },
+    
+    /**
+     * Translates an error code to the type
+     * @param {Number} code - The error code / constant
+     * @returns {string}
+     */
+    translateErrorCode(code) {
+        return {
+            0: 'OK',
+            1: 'ERR_NOT_OWNER',
+            2: 'ERR_NO_PATH',
+            3: 'ERR_NAME_EXISTS',
+            4: 'ERR_BUSY',
+            5: 'ERR_NOT_FOUND',
+            6: 'ERR_NOT_ENOUGH_RESOURCES',
+            7: 'ERR_INVALID_TARGET',
+            8: 'ERR_FULL',
+            9: 'ERR_NOT_IN_RANGE',
+            10: 'ERR_INVALID_ARGS',
+            11: 'ERR_TIRED',
+            12: 'ERR_NO_BODYPART',
+            14: 'ERR_RCL_NOT_ENOUGH',
+            15: 'ERR_GCL_NOT_ENOUGH',
+        }[code * -1];
     },
     
     /**
@@ -104,6 +130,23 @@ module.exports = {
         } else {
             console.log(msg);
         }
+    },
+    
+    /**
+     * Log an error for a creep's action, given an error code
+     * @param {Creep} creep - The creep causing the error
+     * @param {Number} [code] - The error code returned
+     */
+    logErrorCode(creep, code) {
+        const message = `${error}\nroom: ${creep.pos.roomName}\ncreep: ${creep.name}\naction: ${creep.data.actionName}\ntarget: ${creep.data.targetId}`;
+        if (code) {
+            const error = Util.translateErrorCode(code);
+            if (creep) {
+                creep.say(error ? error : code);
+            }
+            Game.notify(message, 120);
+        }
+        console.log(Util.dye(CRAYON.error, message));
     },
     
     /**
@@ -210,15 +253,14 @@ module.exports = {
             } else {
                 mails = Memory.statistics.reports.splice(0, REPORTS_PER_LOOP);
             }
-            const send = Game.notify;
-            _.forEach(mails, send);
+            _.forEach(mails, Game.notify);
         }
     },
     
     routeRange(fromRoom, toRoom) {
         if (fromRoom === toRoom) return 0;
         
-        return Util.get(Memory, `routeRange.${fromRoom}.${toRoom}`, (function() {
+        return Util.get(Memory, `routeRange.${fromRoom}.${toRoom}`, function() {
             const room = fromRoom instanceof Room ? fromRoom : Game.rooms[fromRoom];
             if (!room) return Room.roomDistance(fromRoom, toRoom, false);
             
@@ -226,7 +268,7 @@ module.exports = {
             if (!route) return Room.roomDistance(fromRoom, toRoom, false);
             
             return route === ERR_NO_PATH ? Infinity : route.length;
-        })());
+        });
     },
     
     pave(roomName) {
