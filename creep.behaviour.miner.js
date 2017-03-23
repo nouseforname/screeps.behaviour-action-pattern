@@ -2,10 +2,11 @@ let mod = {};
 module.exports = mod;
 mod.name = 'miner';
 mod.approach = function(creep){
-    let targetPos = new RoomPosition(creep.data.determinatedSpot.x, creep.data.determinatedSpot.y, creep.data.homeRoom);
-    let range = creep.pos.getRangeTo(targetPos);
-    if( range > 0 )
-        creep.travelTo( targetPos, {range:0} );
+    const targetPos = new RoomPosition(creep.data.determinatedSpot.x, creep.data.determinatedSpot.y, creep.data.homeRoom);
+    const range = creep.pos.getRangeTo(targetPos);
+    const targetRange = targetPos.lookFor(LOOK_CREEPS).length ? 1 : 0;
+    if (range > targetRange)
+        creep.travelTo( targetPos, {range:targetRange} );
     return range;
 };
 mod.determineTarget = creep => {
@@ -102,6 +103,7 @@ mod.run = function(creep, params = {}) {
             const energyPerHarvest = creep => creep.data.body && creep.data.body.work ? (creep.data.body.work*2) : (creep.carryCapacity/2);
             if( source.energy === 0 ) {
                 const carryThreshold = (creep.data.body&&creep.data.body.work ? (creep.data.body.work*5) : (creep.carryCapacity/2));
+                const range = params.approach(creep); // move to position if not in range
                 if( creep.carry.energy <= carryThreshold ) {
                     const dropped = creep.pos.findInRange(FIND_DROPPED_ENERGY, 1);
                     if (dropped.length) {
@@ -158,7 +160,6 @@ mod.run = function(creep, params = {}) {
                 return; // idle
             } else if( !params.remote && source.link && source.link.energy < source.link.energyCapacity ) {
                 if(CHATTY) creep.say('harvesting', SAY_PUBLIC);
-                let range = params.approach(creep);
                 if( range === 0 ){
                     if(creep.carry.energy > ( creep.carryCapacity - ( creep.data.body&&creep.data.body.work ? (creep.data.body.work*2) : (creep.carryCapacity/2) )))
                         creep.transfer(source.link, RESOURCE_ENERGY);
@@ -166,7 +167,6 @@ mod.run = function(creep, params = {}) {
                 }
             } else if( source.container && source.container.sum < source.container.storeCapacity ) {
                 if(CHATTY) creep.say('harvesting', SAY_PUBLIC);
-                let range = params.approach(creep);
                 if( range === 0 ){
                     if( creep.carry.energy > ( creep.carryCapacity - energyPerHarvest(creep) )){
                         let transfer = r => { if(creep.carry[r] > 0 ) creep.transfer(source.container, r); };
@@ -176,7 +176,6 @@ mod.run = function(creep, params = {}) {
                 }
             } else {
                 if(CHATTY) creep.say('dropmining', SAY_PUBLIC);
-                let range = params.approach(creep);
                 if( range === 0 ){
                     if( creep.carry.energy > ( creep.carryCapacity - energyPerHarvest(creep) )) {
                         if( OOPS ) creep.say(String.fromCharCode(8681), SAY_PUBLIC);
