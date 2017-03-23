@@ -4,9 +4,11 @@ mod.name = 'miner';
 mod.approach = function(creep){
     const targetPos = new RoomPosition(creep.data.determinatedSpot.x, creep.data.determinatedSpot.y, creep.data.homeRoom);
     const range = creep.pos.getRangeTo(targetPos);
-    const targetRange = targetPos.lookFor(LOOK_CREEPS).length ? 1 : 0;
-    if (range > targetRange)
-        creep.travelTo( targetPos, {range:targetRange} );
+    if (range > 0) {
+        const targetRange = targetPos.lookFor(LOOK_CREEPS).length ? 1 : 0;
+        if (range > targetRange)
+            creep.travelTo( targetPos, {range:targetRange} );
+    }
     return range;
 };
 mod.determineTarget = creep => {
