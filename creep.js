@@ -401,16 +401,32 @@ mod.partsComparator = function (a, b) {
     let indexOfB = partsOrder.indexOf(b);
     return indexOfA - indexOfB;
 };
+mod.formatParts = function(parts) {
+    if (parts && !Array.isArray(parts) && typeof parts === 'object') {
+        const body = [];
+        for (const part of BODYPARTS_ALL) {
+            if (part in parts) body.push(..._.times(parts[part], n => part));
+        }
+        parts = body;
+    }
+    return parts;
+};
+mod.formatBody = function(fixedBody, multiBody) {
+    fixedBody = Creep.formatParts(fixedBody);
+    multiBody = Creep.formatParts(multiBody);
+    return {fixedBody, multiBody};
+};
 // params: {minThreat, maxWeight, maxMulti}
 mod.compileBody = function (room, params, sort = true) {
+    const {fixedBody, multiBody} = Creep.formatBody(params.fixedBody || [], params.multiBody || []);
     if (params.sort !== undefined) sort = params.sort;
     let parts = [];
     let multi = Creep.multi(room, params);
     for (let iMulti = 0; iMulti < multi; iMulti++) {
-        parts = parts.concat(params.multiBody);
+        parts = parts.concat(multiBody);
     }
-    for (let iPart = 0; iPart < params.fixedBody.length; iPart++) {
-        parts[parts.length] = params.fixedBody[iPart];
+    for (let iPart = 0; iPart < fixedBody.length; iPart++) {
+        parts[parts.length] = fixedBody[iPart];
     }
     if( sort ) parts.sort(Creep.partsComparator);            
     if( parts.includes(HEAL) ) {
