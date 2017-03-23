@@ -428,7 +428,10 @@ mod.compileBody = function (room, params, sort = true) {
     for (let iPart = 0; iPart < fixedBody.length; iPart++) {
         parts[parts.length] = fixedBody[iPart];
     }
-    if( sort ) parts.sort(Creep.partsComparator);            
+    if( sort ) {
+        const compareFunction = typeof sort === 'function' ? sort : Creep.partscomparator;
+        parts.sort(compareFunction);
+    }
     if( parts.includes(HEAL) ) {
         let index = parts.indexOf(HEAL);
         parts.splice(index, 1);
