@@ -209,7 +209,7 @@ module.exports = {
      * @param {Date} date - Server date
      * @returns {Date}
      */
-    toLocalData(date) {
+    toLocalDate(date) {
         if (!date) date = new Date();
         let offset = TIME_ZONE;
         if (USE_SUMMERTIME && isSummerTime(date)) offset++;
@@ -291,7 +291,7 @@ module.exports = {
     },
     
     /**
-     * Gets the distances between two rooms
+     * Gets the distances between two rooms, respecting natural walls
      * @param {string} fromRoom - Starting room
      * @param {string} toRoom - Ending room
      * @returns {Number}
