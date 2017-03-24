@@ -102,8 +102,8 @@ mod.run = function(creep, params = {}) {
         }
 
         if( creep.data.determinatedSpot ) {
-            const energyPerHarvest = creep => creep.data.body && creep.data.body.work ? (creep.data.body.work*2) : (creep.carryCapacity/2);
             const range = params.approach(creep); // move to position if not in range
+            const energyPerHarvest = creep => creep.data.body && creep.data.body.work ? (creep.data.body.work*2) : (creep.carryCapacity/2);
             if( source.energy === 0 ) {
                 const carryThreshold = (creep.data.body&&creep.data.body.work ? (creep.data.body.work*5) : (creep.carryCapacity/2));
                 if( creep.carry.energy <= carryThreshold ) {
