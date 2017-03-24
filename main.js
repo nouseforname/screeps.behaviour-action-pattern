@@ -135,6 +135,9 @@ global.install = () => {
         Grafana: GRAFANA ? load('grafana') : undefined,
         Visuals: ROOM_VISUALS && !Memory.CPU_CRITICAL ? load('visuals') : undefined,
     });
+    _.assign(global.Util, {
+        DiamondIterator: load('util.diamond.iterator'),
+    });
     _.assign(global.Task, {
         guard: load("task.guard"),
         defense: load("task.defense"),
