@@ -1,20 +1,3 @@
-const reduceMemoryWhere = function(result, value, key) {
-    const setting = Memory.debugTrace[key];
-    if (!Memory.debugTrace.hasOwnProperty(key)) {
-        return result;
-    } else if (result) { // default result
-        // matches or for falsey values matches printed value
-        return setting === value || (!value && setting === `${value}`);
-    } else {
-        return false;
-    }
-};
-const noMemoryWhere = function(e) {
-    const setting = Memory.debugTrace.no[e[0]];
-    return setting === true || Memory.debugTrace.no.hasOwnProperty(e[0]) &&
-        (setting === e[1] || (!e[1] && setting === `${e[1]}`));
-};
-
 let mod = {};
 module.exports = mod;
 // base class for events
@@ -153,40 +136,17 @@ for(let a in REACTIONS){
         mod.LAB_REACTIONS[REACTIONS[a][b]] = [a,b];
     }
 }
-// used to log something meaningful instead of numbers
-mod.translateErrorCode = function(code){
-    var codes = {
-        0: 'OK',
-        1: 'ERR_NOT_OWNER',
-        2: 'ERR_NO_PATH',
-        3: 'ERR_NAME_EXISTS',
-        4: 'ERR_BUSY',
-        5: 'ERR_NOT_FOUND',
-        6: 'ERR_NOT_ENOUGH_RESOURCES',
-        7: 'ERR_INVALID_TARGET',
-        8: 'ERR_FULL',
-        9: 'ERR_NOT_IN_RANGE',
-        10: 'ERR_INVALID_ARGS',
-        11: 'ERR_TIRED',
-        12: 'ERR_NO_BODYPART',
-        14: 'ERR_RCL_NOT_ENOUGH',
-        15: 'ERR_GCL_NOT_ENOUGH'};
-    return codes[code*-1];
-};
+/**
+ * @deprecated Use {@link Util.translateErrorCode}
+ */
+mod.translateErrorCode = Util.translateErrorCode;
 // manipulate log output
 // simply put a color as "style"
 // or an object, containing any css
-mod.dye = function(style, text){
-    if( isObj(style) ) {
-        var css = "";
-        var format = key => css += key + ":" + style[key] + ";";
-        _.forEach(Object.keys(style), format);
-        return('<font style="' + css + '">' + text + '</font>');
-    }
-    if( style )
-        return('<font style="color:' + style + '">' + text + '</font>');
-    else return text;
-};
+/**
+ * @deprected Use {@link Util.dye}
+ */
+mod.dye = Util.dye;
 // predefined log colors
 mod.CRAYON = {
     death: { color: 'black', 'font-weight': 'bold' },
@@ -195,269 +155,105 @@ mod.CRAYON = {
     system: { color: '#999', 'font-size': '10px' }
 };
 // log an error for a creeps action, given an error code
-mod.logErrorCode = function(creep, code) {
-    if( code ) {
-        var error = translateErrorCode(code);
-        if(creep) {
-            if( error ) creep.say(error);
-            else creep.say(code);
-        }
-        var message = error + '\nroom: ' + creep.pos.roomName + '\ncreep: '  + creep.name + '\naction: ' + creep.data.actionName + '\ntarget: ' + creep.data.targetId ;
-        console.log( dye(CRAYON.error, message) );
-        Game.notify( message, 120 );
-    } else {
-        var message = 'unknown error code\nroom: ' + creep.pos.roomName + '\ncreep: '  + creep.name + '\naction: ' + creep.data.actionName + '\ntarget: ' + creep.data.targetId ;
-        console.log( dye(CRAYON.error, message) );
-    }
-};
+/**
+ * @deprecated Use {@link Util#logErrorCode}
+ *
+ */
+mod.logErrorCode = Util.logErrorCode;
 // log some text as error
-mod.logError = function (message, entityWhere) {
-    if (entityWhere) {
-        trace('error', entityWhere, dye(CRAYON.error, message));
-    } else {
-        console.log(dye(CRAYON.error, message));
-    }
-};
+/**
+ * @deprecated Use {@link Util#logError}
+ */
+mod.logError = Util.logError;
 // trace an error or debug statement
-mod.trace = function (category, entityWhere, ...message) {
-    if (!( Memory.debugTrace[category] === true || _(entityWhere).reduce(reduceMemoryWhere, 1) === true )) return;
-    if (Memory.debugTrace.no && _(entityWhere).pairs().some(noMemoryWhere) === true) return;
-
-    let msg = message;
-    let key = '';
-    if (message.length === 0 && category) {
-        let leaf = category;
-        do {
-            key = leaf;
-            leaf = entityWhere[leaf];
-        } while( entityWhere[leaf] && leaf != category);
-
-        if (leaf && leaf != category) {
-            if (typeof leaf === 'string') {
-                msg = [leaf];
-            } else {
-                msg = [key, '=', leaf];
-            }
-        }
-    }
-
-    console.log(Game.time, dye(CRAYON.error, category), ...msg, dye(CRAYON.birth, JSON.stringify(entityWhere)));
-};
+/**
+ * @deprecated Use {@link Util#trace}
+ */
+mod.trace = Util.trace;
 // log some text as "system message" showing a "referrer" as label
-mod.logSystem = function(roomName, message) {
-    let text = dye(CRAYON.system, roomName);
-    console.log( dye(CRAYON.system, `<a href="/a/#!/room/${roomName}">${text}</a> &gt; `) + message );
-};
-mod.isObj = function(val){
-    if (val === null) { return false;}
-    return ( (typeof val === 'function') || (typeof val === 'object') );
-};
+/**
+ * @deprecated Use {@link Util#logSystem}
+ */
+mod.logSystem = Util.logSystem;
+/**
+ * @deprecated Use {@link Util#isObject}
+ */
+mod.isObj = Util.isObject;
 // for notify mails: transform server time to local
-mod.toLocalDate = function(date){
-    if( !date ) date = new Date();
-    var offset = TIME_ZONE;
-    if( USE_SUMMERTIME && isSummerTime(date) ) offset++;
-    return new Date(date.getTime() + (3600000 * offset));
-};
+/**
+ * @deprecated Use {@link Util#toLocalDate}
+ */
+mod.toLocalDate = Util.toLocalDate;
 // for notify mails: format dateTime (as date & time)
-mod.toDateTimeString = function(date){
-    return (len(date.getDate()) + "." + len(date.getMonth()+1) + "." + len(date.getFullYear()) + " " + len(date.getHours()) + ":" + len(date.getMinutes()) + ":" + len(date.getSeconds()));
-};
+/**
+ * @deprecated Use {@link Util#toDateTimeString}
+ */
+mod.toDateTimeString = Util.toDateTimeString;
 // for notify mails: format dateTime (as time only)
-mod.toTimeString = function(date){
-    return (len(date.getHours()) + ":" + len(date.getMinutes()) + ":" + len(date.getSeconds()));
-};
+/**
+ * @deprecated Use {@link Util#toTimeString}
+ */
+mod.toTimeString = Util.toTimeString;
 // prefix 1 digit numbers with an 0
+/**
+ * @deprecated Use {@link Util#pad}
+ */
 mod.len = function(number){
     return ("00" + number).slice(-2);
 };
 // determine if a given dateTime is within daylight saving time (DST)
 // you may need to adjust that to your local summer time rules
 // default: Central European Summer Time (CEST)
-mod.isSummerTime = function(date){
-    var year = date.getFullYear();
-    // last sunday of march
-    var temp = new Date(year, 2, 31);
-    var begin = new Date(year, 2, temp.getDate() - temp.getDay(), 2, 0, 0);
-    // last sunday of october
-    temp = new Date(year, 9, 31);
-    var end = new Date(year, 9, temp.getDate() - temp.getDay(), 3, 0, 0);
-
-    return ( begin < date && date < end );
-};
+/**
+ * @deprecated Use {@link Util#isSummerTime}
+ */
+mod.isSummerTime = Util.isSummerTime;
 // add a game object, obtained from its id, to an array
-mod.addById = function(array, id){
-    if(array == null) array = [];
-    var obj = Game.getObjectById(id);
-    if( obj ) array.push(obj);
-    return array;
-};
+/**
+ * @deprecated Use {@link Util#addById}
+ */
+mod.addById = Util.addById;
 // send up to REPORTS_PER_LOOP notify mails, which are cached in memory
-mod.processReports = function(){
-    // if there are some in memory
-    if( !_.isUndefined(Memory.statistics) && !_.isUndefined(Memory.statistics.reports) && Memory.statistics.reports.length > 0 ){
-        let mails;
-        // below max ?
-        if( Memory.statistics.reports.length <= REPORTS_PER_LOOP ){
-            // send all
-            mails = Memory.statistics.reports;
-            Memory.statistics.reports = [];
-        }
-        else {
-            // send first chunk
-            let chunks = _.chunk(Memory.statistics.reports, REPORTS_PER_LOOP);
-            mails = chunks[0];
-            Memory.statistics.reports = _(chunks).tail().concat();
-        }
-        let send = mail => Game.notify(mail);
-        _.forEach(mails, send);
-    }
-};
+/**
+ * @deprecated Use {@link Util#processReports}
+ */
+mod.processReports = Util.processReports;
 // get movement range between rooms
 // respecting environmental walls
 // uses memory to cache for ever
-mod.routeRange = function(fromRoom, toRoom){
-    if( fromRoom === toRoom ) return 0;
-    if( _.isUndefined(Memory.routeRange) ){
-        Memory.routeRange = {};
-    }
-    if( _.isUndefined(Memory.routeRange[fromRoom]) ){
-        Memory.routeRange[fromRoom] = {};
-    }
-    if( _.isUndefined(Memory.routeRange[fromRoom][toRoom]) ){
-        // ensure start room object
-        let room = null;
-        if( fromRoom instanceof Room ) room = fromRoom;
-        else room = Game.rooms[fromRoom];
-        if( _.isUndefined(room) ) return Room.roomDistance(fromRoom, toRoom, false);
-        // get valid route to room (respecting environmental walls)
-        let route = room.findRoute(toRoom, false, false);
-        if( _.isUndefined(route) ) return Room.roomDistance(fromRoom, toRoom, false);
-        // store path length for ever
-        Memory.routeRange[fromRoom][toRoom] = route == ERR_NO_PATH ? Infinity : route.length;
-    }
-    return Memory.routeRange[fromRoom][toRoom];
-};
+/**
+ * @deprecated Use {@link Util#routeRange}
+ */
+mod.routeRange = Util.routeRange;
 // turn brown flags into wall construction sites
 // save positions in memory (to ignore them for repairing)
-mod.pave = function(roomName){
-    let flags = _.values(Game.flags).filter(flag => flag.pos.roomName == roomName && flag.color == COLOR_BROWN);
-    let val = Memory.pavementArt[roomName] === undefined ? '' : Memory.pavementArt[roomName];
-    let posMap = flag => 'x'+flag.pos.x+'y'+flag.pos.y;
-    Memory.pavementArt[roomName] = val + flags.map(posMap).join('')+'x';
-    let setSite = flag => flag.room.createConstructionSite(flag, STRUCTURE_WALL);
-    flags.forEach(setSite);
-    let remove = flag => flag.remove();
-    flags.forEach(remove);
-};
-mod.unpave = function(roomname){
-    if( !Memory.pavementArt || !Memory.pavementArt[roomname] ) return false;
-    let room = Game.rooms[roomname];
-    if( !room ) return false;
-    let unpaved = structure => Memory.pavementArt[roomname].indexOf('x'+structure.pos.x+'y'+structure.pos.y+'x') >= 0;
-    let structures = room.structures.all.filter(unpaved);
-    let destroy = structure => structure.destroy();
-    if( structures ) structures.forEach(destroy);
-    delete Memory.pavementArt[roomname];
-    return true;
-};
-mod.guid = function(){
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-};
-mod.memoryUsage = function(key) {
-    const mem = key ? Memory[key] : Memory;
-    let string = '<table><tr><th>Key</th><th>Size (kb)</th></tr>';
-    let total = 0;
-    for (const key in mem) {
-        const sum = JSON.stringify(mem[key]).length / 1024;
-        total += sum;
-        string += `<tr><td>${key}</td><td>${_.round(sum, 2)}</td></tr>`;
-    }
-    string += `<tr><td>Total</td><td>${_.round(total, 2)}</td></tr></table>`;
-    return string;
-};
+/**
+ * @deprecated Use {@link Util#pave}
+ */
+mod.pave = Util.pave;
+/**
+ * @deprecated Use {@link Util#unpave}
+ */
+mod.unpave = Util.unpave;
+/**
+ * @deprecated Use {@link Util#guid}
+ */
+mod.guid = Util.guid;
+/**
+ * @deprecated Use {@link Util#memoryUsage}
+ */
+mod.memoryUsage = Util.memoryUsage;
 mod.profiler = null;
-mod.resetProfiler = function() {
-    mod.loadProfiler(true);
-};
-mod.loadProfiler = function(reset) {
-    if (reset) {
-        logSystem('Profiler', 'resetting profiler data.');
-        Memory.profiler = {
-            totalCPU: 0,
-            totalTicks: 0,
-            types: {},
-            validTick: Game.time
-        };
-    }
-    mod.profiler = Memory.profiler;
-};
-mod.startProfiling = function(name, startCPU) {
-    let checkCPU = function(localName, limit, type) {};
-    let totalCPU = function() {
-        // if you would like to do a baseline comparison
-        // if (_.isUndefined(Memory.profiling)) Memory.profiling = {ticks:0, cpu: 0};
-        // let thisTick = Game.cpu.getUsed() - startCPU;
-        // Memory.profiling.ticks++;
-        // Memory.profiling.cpu += thisTick;
-        // logSystem('Total', _.round(thisTick, 2) + ' ' + _.round(Memory.profiling.cpu / Memory.profiling.ticks, 2));
-    };
-    if (PROFILE || DEBUG) {
-        if (_.isUndefined(Memory.profiler)) resetProfiler();
-        else if (!mod.profiler ||
-            mod.profiler.validTick !== Memory.profiler.validTick ||
-            mod.profiler.totalTicks < Memory.profiler.totalTicks) {
-            loadProfiler();
-        }
-        const onLoad = startCPU || Game.cpu.getUsed();
-        let start = onLoad;
-        if (PROFILE) {
-            checkCPU = function(localName, limit, type) {
-                let current = Game.cpu.getUsed();
-                let used = _.round(current - start, 2);
-                if (!limit || used > limit) {
-                    logSystem(name + ':' + localName, used);
-                }
-                if (type) {
-                    if (_.isUndefined(mod.profiler.types[type])) mod.profiler.types[type] = {totalCPU: 0, count: 0, totalCount: 0};
-                    mod.profiler.types[type].totalCPU = mod.profiler.types[type].totalCPU + used;
-                    mod.profiler.types[type].count++;
-                }
-                start = current;
-            };
-        }
-        totalCPU = function() {
-            const totalUsed = Game.cpu.getUsed() - onLoad;
-            mod.profiler.totalCPU = mod.profiler.totalCPU + totalUsed;
-            mod.profiler.totalTicks = mod.profiler.totalTicks + 1;
-            const avgCPU = mod.profiler.totalCPU / mod.profiler.totalTicks;
-            if (PROFILE && PROFILING.AVERAGE_USAGE && _.size(mod.profiler.types) > 0) {
-                let heading = '';
-                while (heading.length < 30) heading += ' ';
-                global.logSystem(heading, '(avg/creep/tick) (active) (weighted avg) (executions)');
-                for (let type in mod.profiler.types) {
-                    let data = mod.profiler.types[type];
-                    data.totalCount = data.totalCount + data.count;
-                    const typeAvg = _.round(data.totalCPU / data.totalCount, 3);
-                    let heading = type + ': ';
-                    while (heading.length < 30) heading += ' ';
-                    global.logSystem(heading, '     ' + typeAvg + '          ' +
-                        data.count + '       ' + (_.round(typeAvg * data.count, 3)) + '          ' + data.totalCount );
-                    data.count = 0;
-                }
-            }
-            logSystem(name, ' loop:' + _.round(totalUsed, 2) + ' other:' + _.round(onLoad, 2) + ' avg:' + _.round(avgCPU, 2) + ' ticks:' +
-                mod.profiler.totalTicks + ' bucket:' + Game.cpu.bucket, 2);
-            if (PROFILE) console.log('\n');
-            Memory.profiler = mod.profiler;
-        };
-    }
-    return {
-        checkCPU: checkCPU,
-        totalCPU: totalCPU,
-    };
-};
+/**
+ * @deprecated Use {@link Util#resetProfiler}
+ */
+mod.resetProfiler = Util.resetProfiler;
+/**
+ * @deprecated Use {@link Util#loadProfiler}
+ */
+mod.loadProfiler = Util.loadProfiler;
+/**
+ * @deprecated Use {@link Util#startProfiling}
+ */
+mod.startProfiling = Util.startProfiling;
 mod = _.bindAll(mod);
