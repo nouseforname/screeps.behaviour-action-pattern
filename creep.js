@@ -364,7 +364,7 @@ mod.execute = function(){
         try {
             creep.run();
         } catch (e) {
-            console.log('<span><font style="color:FireBrick">Creep ' + creep.name + (e.stack || e.toString()) + '</font></span>');
+            console.log('<span style="color:FireBrick">Creep ' + creep.name + (e.stack || e.toString()) + '</span>');
         }
     };
     _.forEach(Game.creeps, run);
