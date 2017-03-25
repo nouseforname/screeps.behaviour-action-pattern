@@ -32,6 +32,17 @@ mod.flush = function () {
 mod.register = function () {
     Task.tasks.forEach(task => {
         if (task.register) task.register();
+        if (task.handleFlagFound) Flag.found.on(task.handleFlagFound);
+        if (task.handleFlagRemoved) Flag.FlagRemoved.on(task.handleFlagRemoved);
+        if (task.handleSpawningStarted) Creep.spawningStarted.on(task.handleSpawningStarted);
+        if (task.handleSpawningCompleted) Creep.spawningCompleted.on(task.handleSpawningCompleted);
+        if (task.handleCreepDied) {
+            Creep.predictedRenewal.on(creep => task.handleCreepDied(creep.name));
+            Creep.died.on(task.handleCreepDied);
+        }
+        if (task.handleNewInvader) Room.newInvader.on(task.handleNewInvader);
+        if (task.handleGoneInvader) Room.goneInvader.on(task.handleGoneInvader);
+        if (task.handleRoomDied) Room.collapsed.on(task.handleRoomDied);
     });
 };
 mod.memory = (task, s) => { // task:  (string) name of the task, s: (string) any selector for that task, could be room name, flag name, enemy name
