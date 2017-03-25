@@ -31,16 +31,22 @@ mod.flush = function () {
 // register tasks (hook up into events)
 mod.register = function () {
     Task.tasks.forEach(task => {
+        // Extending of any other kind
         if (task.register) task.register();
+        // Flag Events
         if (task.handleFlagFound) Flag.found.on(task.handleFlagFound);
         if (task.handleFlagRemoved) Flag.FlagRemoved.on(task.handleFlagRemoved);
+        // Creep Events
         if (task.handleSpawningStarted) Creep.spawningStarted.on(task.handleSpawningStarted);
         if (task.handleSpawningCompleted) Creep.spawningCompleted.on(task.handleSpawningCompleted);
         if (task.handleCreepDied) {
             Creep.predictedRenewal.on(creep => task.handleCreepDied(creep.name));
             Creep.died.on(task.handleCreepDied);
         }
+        if (task.handleCreepError) Creep.error.on(task.handleCreepError);
+        // Room events
         if (task.handleNewInvader) Room.newInvader.on(task.handleNewInvader);
+        if (task.handleKnownInvader) Room.knownInvader.on(task.handleKnownInvader);
         if (task.handleGoneInvader) Room.goneInvader.on(task.handleGoneInvader);
         if (task.handleRoomDied) Room.collapsed.on(task.handleRoomDied);
     });
