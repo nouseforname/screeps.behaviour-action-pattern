@@ -142,7 +142,7 @@ mod.extend = function(){
         }
     });
     
-    Object.defineProperty(Flag.prototype, 'is', {
+    Object.defineProperty(Flag.prototype, 'compareTo', {
         configurable: true,
         // FLAG_COLOR flag
         value: function(flag) {
