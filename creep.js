@@ -360,7 +360,13 @@ mod.extend = function(){
 };
 mod.execute = function(){
     if ( DEBUG && Memory.CPU_CRITICAL ) logSystem('system',`${Game.time}: CPU Bucket level is critical (${Game.cpu.bucket}). Skipping non critical creep roles.`);
-    let run = creep => creep.run();
+    let run = creep => {
+        try {
+                creep.run();
+        } catch (e) {
+            console.log('<font style="color:FireBrick">Creep ' + creep.name + (e.stack || e.toString()) + '</font>');
+        }
+    };
     _.forEach(Game.creeps, run);
 };
 mod.bodyCosts = function(body){
