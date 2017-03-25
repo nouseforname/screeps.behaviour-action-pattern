@@ -419,14 +419,15 @@ mod.formatBody = function(fixedBody, multiBody) {
 // params: {minThreat, maxWeight, maxMulti}
 mod.compileBody = function (room, params, sort = true) {
     const {fixedBody, multiBody} = Creep.formatBody(params.fixedBody || [], params.multiBody || []);
+    _.assign(params, {fixedBody, multiBody});
     if (params.sort !== undefined) sort = params.sort;
     let parts = [];
     let multi = Creep.multi(room, params);
     for (let iMulti = 0; iMulti < multi; iMulti++) {
-        parts = parts.concat(multiBody);
+        parts = parts.concat(params.multiBody);
     }
-    for (let iPart = 0; iPart < fixedBody.length; iPart++) {
-        parts[parts.length] = fixedBody[iPart];
+    for (let iPart = 0; iPart < params.fixedBody.length; iPart++) {
+        parts[parts.length] = params.fixedBody[iPart];
     }
     if( sort ) {
         const compareFunction = typeof sort === 'function' ? sort : Creep.partscomparator;
