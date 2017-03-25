@@ -28,6 +28,8 @@ mod.flush = function () {
         if (task.flush) task.flush();
     });
 };
+// temporary hack to avoid registering twice internally, remove and fix internal when merged.
+mod.selfRegister = true;
 // register tasks (hook up into events)
 mod.register = function () {
     Task.tasks.forEach(task => {
