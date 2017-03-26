@@ -1,0 +1,36 @@
+{
+  "ocs.internal": {
+    "reset": "upstream/dev",
+    "merge": [
+      "upstream/change/simplifyTaskRegister",
+      "upstream/feature/actionRenewing",
+      "upstream/wip-creepBody",
+      "upstream/wip-train",
+      "upstream/task/remoteMineralMiner",
+      "upstream/feature/SKMiners"
+    ]
+  },
+  "ocs.public": {
+    "reset": "upstream/dev",
+    "merge": [
+      "upstream/change/infectObjects",
+      "upstream/fix/roomRecovery",
+      "upstream/bug/roomCollapsedWaste",
+      "upstream/feature/semiautoConstruction",
+      "upstream/change/robustLv5MoreHaulers",
+      "upstream/change/costMatrixCaching",
+      "upstream/fix/minersRepair",
+      "upstream/fix/minerEfficiency",
+      "upstream/task/labTechPartDeux",
+      "upstream/change/behaveYourselves",
+      "upstream/change/pickingStrategyResources",
+      "upstream/hotfix/creepsUseProtection",
+      "upstream/change/simplifyTaskRegister",
+      "upstream/change/remoteMinerStrategies",
+      "upstream/change/partsRefactor",
+      "upstream/change/removeUnnecessary",
+      "upstream/debug/findCircular",
+      "upstream/change/visualsRefactor"
+    ]
+  }
+}
